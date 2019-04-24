@@ -162,6 +162,6 @@ int main(){
 
     alturaArvore = height(root);
     cout << alturaArvore<< endl;
-
+    
     return 0;
 }
