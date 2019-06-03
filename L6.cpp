@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <math>
+#include <cmath>
 
 using namespace std;
 typedef struct{
@@ -12,7 +12,12 @@ typedef struct{
     int local;
     int coefficient;
     int distance;
+    float custo;
 }graf;
+typedef struct{
+    int v;
+    int dv;
+}dupla;
 
 class library{
     public:
@@ -31,15 +36,24 @@ class library{
         bool dijkstraCalculated(){
             this->bDijkstra;
         }
+        int idMenorDistancia(int id){
+            return this->leastCust[id].local;
+        }
+        int menorCustoPara(int id){
+            return this->leastCust[id].custo;
+        }
+        int idPrecusor(int id){
+            return this->precusor[id]; 
+        }
         library(int quantityBook){
             this-> books.resize(quantityBook);
-            this-> precusor.resize(quantityBook); 
-            this->leastDistance.resize(quantityBook);
-            this->bDijkstra = false;
+            this-> precusor.resize(quantityBook); // id == armazem
+            this-> leastCust.resize(quantityBook); //nao necessariamente
+            this-> bDijkstra = false;
         }
     private:
         vector<int> books;
-        vector<int> leastDistance;
+        vector<graf> leastCust;
         vector<int> precusor;
         bool bDijkstra;
 };
@@ -57,7 +71,7 @@ void heapify(vector<int>&H, int i){
 
 vector<int> build_heap(vector<int>H){
     for(int i = floor(H.size()/2)-1; i>=0; i--){
-        heapify(&H,i);
+        heapify(H,i);
     }
     return H;
 }
@@ -70,15 +84,18 @@ int heap_extract(vector<int>& H){
 }
 
 void dijkstra(vector<vector<int>>&Grafo,int size,int origin){
+    dupla add;
     vector<int> distance(size, 0x3f3f3f3f);
     vector<int> precursor(size, -1);
     distance[origin] = 0;
-    vector<int> H(size);
+    vector<dupla> H(size);
+
     H = build_heap(distance);
     
     while(H.size() > 0){
 
     }
+
 }
 
 int main(){
@@ -91,11 +108,22 @@ int main(){
     vector<library> librarys(nLocality, library(nBooks));
     vector<vector<graf>> distances(nLocality); //matriz de lista adjacencia do grafo
     vector<request> requests;
+    graf add;
 
     for(int k=0; k<nRoad; k++){
-        cin >> x >> y >> d >> w;
-        
-        coefficient[x][y] = w;
+        cin >> x >> y >> add.distance >> add.coefficient;
+        add.custo = (add.distance*(100 + add.coefficient))/100.;
+
+        add.local = y; //index do armazém
+        distances[x].push_back(add);
+        add.local = x;
+        distances[y].push_back(add);
+
+        /*bool adicionou = false;
+        for(int i = 0; i < distances[x].size(); i++){
+            if(add.local < distances[x][i].local)
+                distances[x].emplace(distances[x].begin() + i,add);
+        }*/
     }
     for(int a = 0; a < nLocality; a++){
         for(int b=0; b<nBooks; b++){
@@ -128,7 +156,35 @@ int main(){
             //não tem na loja que o comprador está
             else{
                 if(librarys[t].dijkstraCalculated()){
-                    
+                    bool vendido = false;
+                    for(int j = 1; j < nLocality && !vendido; j++){ //varre localidades
+
+                        bool quantidadeSuficiente = true;
+                        for(int i = 0; i < m && quantidadeSuficiente ; i++){ //varre pedidos
+                            if(librarys[librarys[t].idMenorDistancia(j)].getQuantityBook(requests[i].book) < requests[i].quantity)
+                                quantidadeSuficiente = false;
+                        }
+                        if(quantidadeSuficiente){
+                            // j vai vender para t
+                            vendido = true;
+                            for(int i = 0; i < m; i++){
+                                librarys[librarys[t].idMenorDistancia(j)].sellBook(requests[i].book,requests[i].quantity);
+                            }
+                            int id = j;
+                            cout << id;
+                            while(id != t){
+                                id = librarys[t].idPrecusor(j);
+                                cout <<" "<<id;
+                            }
+                            cout << " " <<librarys[t].menorCustoPara(j)<<endl;
+                        }
+                    }
+                    if(!vendido)
+                        cout << "OOS"<<endl;
+                }
+                else{
+
+
                 }
             }
         }
