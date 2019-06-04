@@ -72,6 +72,7 @@ bool compare(dupla a, dupla b){
     }
     return a.v < b.v;
 }
+
 void heapify(vector<dupla>&H, int i,vector<int>&indexes){
     int l= 2*i+1, r= 2*i+2, m = i;
     if(l < H.size() && compare(H[l],H[m]))
@@ -98,7 +99,7 @@ void build_heap(vector<dupla>&H, vector<int>&indexes){
 dupla heap_extract(vector<dupla>& H, vector<int>& indexes){
     dupla r = H[0];
     
-   /*  int aux = indexes[H[0].v]; //aux == posicao na heap
+    /*int aux = indexes[H[0].v]; //aux == posicao na heap
     indexes[H[0].v] = indexes[H[H.size()-1].v];
     indexes[H[H.size()-1].v] = aux; */
     
@@ -128,7 +129,7 @@ void heap_insert(vector<dupla>&H, dupla v,vector<int>& index){
     bubble_up(H,i,index);
 }
 
-vector<int> dijkstra(vector<vector<graf>>&Grafo, vector<dupla>& custo, int size,int origin){
+vector<int> dijkstra(vector<vector<graf> >&Grafo, vector<dupla>& custo, int size,int origin){
     vector<int> precursor(size, -1);
     vector<int> indexes(size);
     custo[origin].dv = 0;
@@ -138,38 +139,25 @@ vector<int> dijkstra(vector<vector<graf>>&Grafo, vector<dupla>& custo, int size,
     dupla rem;
     rem.v = origin;
     rem.dv = 0;
-    cout <<"to aqui\n";
     heap_insert(H,rem,indexes);
-
-
-    //indexes[rem.v] = 0;
-    cout<< "AAAAAA";
 
     while(H.size() > 0){
         rem = heap_extract(H,indexes);
         for(int i=0; i < Grafo[rem.v].size(); i++){
-            if( custo[Grafo[rem.v][i].coefficient].dv > rem.dv + Grafo[rem.v][i].custo){
-                cout <<"entrou";
-                custo[Grafo[rem.v][i].coefficient].dv = rem.dv + Grafo[rem.v][i].custo;
-                precursor[Grafo[rem.v][i].coefficient] = rem.v;
+            if( custo[Grafo[rem.v][i].local].dv > rem.dv + Grafo[rem.v][i].custo){
+                
+                custo[Grafo[rem.v][i].local].dv = rem.dv + Grafo[rem.v][i].custo;
+                precursor[Grafo[rem.v][i].local] = rem.v;
                 
                 //heap update -------
                 dupla add;
-                add.v = Grafo[rem.v][i].coefficient;
-                add.dv = Grafo[rem.v][i].custo;
+                add.v = Grafo[rem.v][i].local;
+                add.dv = custo[Grafo[rem.v][i].local].dv;
+                custo[Grafo[rem.v][i].local].v = Grafo[rem.v][i].local;
                 heap_insert(H,add,indexes);
-
-                    /* cout <<"entrou if"<<endl;
-                    H[indexes[Grafo[rem.v][i].coefficient]].dv = custo[Grafo[rem.v][i].coefficient].dv;
-                    heapify(H, indexes[Grafo[rem.v][i].coefficient], indexes);
-                    bubble_up(H, indexes[Grafo[rem.v][i].coefficient],indexes); */
-                
             }
         }
     }
-   /*  for(int i =0; i<custo.size();i++)
-                        cout << custo[i].v<<","<<custo[i].dv <<"|| ";
-                    cout<<endl; */
     return precursor;
 }
 
@@ -179,6 +167,8 @@ bool compareTwoElements(const dupla &a,const dupla &b){
 }
 
 int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
     int x,y,d,w,q,t,m,id;
     int nLocality, nRoad, nBooks; //nLocality = V, nRoad = E
     string command;
@@ -186,8 +176,8 @@ int main(){
     cin >> nLocality >> nRoad >> nBooks;
     vector<library> librarys(nLocality, library(nBooks,nLocality));
 
-    vector<vector<graf>> distances(nLocality); //matriz de lista adjacencia do grafo
-    vector<vector<int>> auxId(nLocality,vector<int>(nLocality));
+    vector<vector<graf> > distances(nLocality); //matriz de lista adjacencia do grafo
+    vector<vector<int> > auxId(nLocality,vector<int>(nLocality));
 
     vector<request> requests;
     graf add;
@@ -203,12 +193,6 @@ int main(){
         add.local = x;
         distances[y].push_back(add);
         auxId[y][x] = distances[y].size()-1;
-
-        /*bool adicionou = false;
-        for(int i = 0; i < distances[x].size(); i++){
-            if(add.local < distances[x][i].local)
-                distances[x].emplace(distances[x].begin() + i,add);
-        }*/
     }
     for(int a = 0; a < nLocality; a++){
         for(int b=0; b<nBooks; b++){
@@ -240,45 +224,12 @@ int main(){
             }
             //não tem na loja que o comprador está
             else{
-                if(librarys[t].dijkstraCalculated()){
-
-                    bool vendido = false;
-                    for(int j = 1; j < nLocality && !vendido; j++){ //varre localidades, vetor dos menores custos
-
-                        bool quantidadeSuficiente = true;
-                        for(int i = 0; i < m && quantidadeSuficiente ; i++){ //varre pedidos
-                            if(librarys[librarys[t].idMenorDistancia(j)].getQuantityBook(requests[i].book) < requests[i].quantity)
-                                quantidadeSuficiente = false;
-                        }
-                        if(quantidadeSuficiente){
-                            // j vai vender para t
-                            vendido = true;
-                            for(int i = 0; i < m; i++){
-                                librarys[librarys[t].idMenorDistancia(j)].sellBook(requests[i].book,requests[i].quantity);
-                            }
-                            int id = j;
-                            cout << id;
-                            while(id != t){
-                                id = librarys[t].idPrecusor(j);
-                                cout <<" "<<id;
-                            }
-                            cout << " " <<librarys[t].menorCustoPara(j)<<endl;
-                        }
-                    }
-                    if(!vendido)
-                        cout << "OOS"<<endl;
-                }
-                else{
                     dupla ex;
                     ex.v = 0;
                     ex.dv = 0x3f3f3f3f;
                     vector<dupla> custo(nLocality,ex);
 
                     vector<int> precursores = dijkstra(distances,custo,nLocality,t);
-
-                    for(int i =0; i<custo.size();i++)
-                        cout << custo[i].v<<","<<custo[i].dv <<"|| ";
-                    cout<<endl;
 
                     sort(custo.begin(),custo.end(),compareTwoElements);
 
@@ -298,10 +249,11 @@ int main(){
                             for(int i = 0; i < m; i++){
                                 librarys[librarys[t].idMenorDistancia(j)].sellBook(requests[i].book,requests[i].quantity);
                             }
-                            int id = j;
+                            int id = custo[j].v;
                             cout << id;
+
                             while(id != t){
-                                id = librarys[t].idPrecusor(j);
+                                id = precursores[id];
                                 cout <<" "<<id;
                             }
                             cout << " " <<librarys[t].menorCustoPara(j)<<endl;
@@ -310,7 +262,6 @@ int main(){
                     if(!vendido)
                         cout << "OOS"<<endl;
                 }
-            }
         }
         else if(command == "UPD"){
             cin >> x >> y >> w;
@@ -318,8 +269,7 @@ int main(){
             distances[x][auxId[x][y]].custo = (distances[x][auxId[x][y]].distance*(100 + distances[x][auxId[x][y]].coefficient))/100.;
             distances[y][auxId[y][x]].coefficient = w;
             distances[y][auxId[y][x]].custo = (distances[y][auxId[y][x]].distance*(100 + distances[y][auxId[y][x]].coefficient))/100.;
-            for(int i = 0; i < nLocality; i++)
-                librarys[i].changedDikstra();
+
         }
         else if(command == "STK"){
             int I;
